@@ -1,32 +1,46 @@
-# Prerequisites
-*.d
+CMakeCache.txt
+CMakeFiles/
+CMakeFiles/*
+Makefile
+cmake_install.cmake
+install_manifest.txt
 
-# Compiled Object files
-*.slo
-*.lo
+build-*/
+CMakeLists.txt.user
+
+#WARNING, this is complex project. with multi subproject.
+#android ignore
+.idea/
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# built native files
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
 *.so
-*.dylib
-*.dll
+*.log*
 
-# Fortran module files
-*.mod
-*.smod
+# generated files
+bin/
+gen/
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+# Ignore gradle files
+.gradle/
+build/
 
-# Executables
-*.exe
-*.out
-*.app
+# Local configuration file (sdk path, etc)
+local.properties
+
+service_*-build/
+
+
+#proto generated files should fitled
+*.pb.cc
+*.pb.h
+
+pkg
+vendor
+Gopkg.*

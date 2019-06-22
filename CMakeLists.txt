@@ -1,0 +1,7 @@
+execute_process(COMMAND bash ./proto/gen.sh -c)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build/obj")
+set(CMAKE_INCLUDE ${PROJECT_SOURCE_DIR}/include)
+ADD_SUBDIRECTORY(src)
+INSTALL(FILES log.conf  DESTINATION conf)
+INSTALL(FILES ./scripts/check_im_service.sh   DESTINATION bin)
+INSTALL(FILES ./scripts/start.sh           DESTINATION bin)

@@ -63,4 +63,5 @@ FILE(GLOB json "${COMMON}/third/json/*.cpp")
 LINK_DIRECTORIES("/usr/local/lib/")
 
 ADD_LIBRARY(im SHARED  ${root} ${threadpool}  ${xml}  ${redis}  ${base} ${protobuf} ${node} ${core} ${network} ${event} ${proto} ${json})
+TARGET_LINK_LIBRARIES(im protobuf pthread log4cpp event_pthreads event jemalloc im)
 INSTALL(FILES libim.so   DESTINATION lib)

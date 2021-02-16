@@ -9,11 +9,14 @@
 
 class ConnService;
 struct NodeConnectedState;
-class MsgService :public Instance {
+class MsgService : public Instance
+{
 private:
-	class SNode {
+	class SNode
+	{
 	public:
-		SNode() {
+		SNode()
+		{
 			connected = false;
 		}
 		int sockfd;
@@ -21,39 +24,38 @@ private:
 		int sid;
 		bool connected;
 	};
+
 public:
-	MsgService(SdEventLoop* loop, ConnService*  conn);
-	static void OnAccept(SdEventLoop * eventLoop, int fd, void * clientData, int mask);
+	MsgService(SdEventLoop *loop, ConnService *conn);
+	static void OnAccept(SdEventLoop *eventLoop, int fd, void *clientData, int mask);
 	int init();
 	int start();
 
-	
-	static void connectionStateEventCb(NodeConnectedState* state, void * arg);
+	static void connectionStateEventCb(NodeConnectedState *state, void *arg);
 	void registLoadBalance(int sockfd);
 
-	 void connectionStateEvent(int sockfd, int state, int sid, int nid);
+	void connectionStateEvent(int sockfd, int state, int sid, int nid);
 
-	int  recvClientMsg(int _sockfd,  PDUBase& _base);
-	int  processInnerMsg(int sockfd, SPDUBase& base);
+	int recvClientMsg(int _sockfd, PDUBase &_base);
+	int processInnerMsg(int sockfd, SPDUBase &base);
 	int randomGetSock();
-	virtual void onData(int _sockfd, PDUBase* _base);
+	virtual void onData(int _sockfd, PDUBase *_base);
 	virtual void onEvent(int fd, ConnectionEvent event);
-	
 
-	// ±¾·şÎñÆ÷µÄipºÍ¶Ë¿Ú
+	// æœ¬æœåŠ¡å™¨çš„ipå’Œç«¯å£
 	std::string m_ip;
-	int        m_port;
-	
-	SdEventLoop*               loop_;
-	TcpService                 tcpService_;
+	int m_port;
 
-	ConnService*               m_connService;
+	SdEventLoop *loop_;
+	TcpService tcpService_;
 
-	std::list<SNode*>          m_nodes;
-	int                       m_dispatch_num;
+	ConnService *m_connService;
 
-	int                       m_cur_dispatch;
-	CNode*                    m_pNode;
+	std::list<SNode *> m_nodes;
+	int m_dispatch_num;
+
+	int m_cur_dispatch;
+	CNode *m_pNode;
 };
 
 #endif

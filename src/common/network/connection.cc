@@ -3,8 +3,7 @@
 #include <cstring>
 #include <unistd.h>
 
-
-extern  uint32_t total_send_pkt;
+extern uint32_t total_send_pkt;
 extern uint32_t send_fail_pkts;
 Connection::Connection()
 {
@@ -14,10 +13,10 @@ Connection::Connection()
 	buf_len = 0;
 	less_pkt_len = 0;
 	pkt_len = 0;
-	
+
 	//out_buffer = new IMQueue<msg_t>;
 	send_len = 0;
-	
+
 	finish = true;
 
 	cache = true;
@@ -28,12 +27,12 @@ Connection::Connection()
 
 Connection::~Connection()
 {
-	if (pdu) {
+	if (pdu)
+	{
 		delete pdu;
 	}
 	buf_len = 0;
 	less_pkt_len = 0;
-
 }
 
 bool Connection::empty()
@@ -43,11 +42,13 @@ bool Connection::empty()
 
 bool Connection::nextPkt()
 {
-	if (!finish) {
+	if (!finish)
+	{
 		//msg = conn->out_pkt;
 		return true;
 	}
-	else if (!out_buffer.empty()) {
+	else if (!out_buffer.empty())
+	{
 		out_buffer.pop(out_pkt);
 		//		msg = conn->out_pkt;
 		finish = false;
@@ -58,9 +59,10 @@ bool Connection::nextPkt()
 
 void Connection::clear()
 {
-    printf("clear buf\n");
+	printf("clear buf\n");
 	memset(buf, 0, sizeof(buf));
-	if (pdu) {
+	if (pdu)
+	{
 		delete pdu;
 	}
 	buf_len = 0;
@@ -68,7 +70,7 @@ void Connection::clear()
 	pkt_len = 0;
 }
 
-void Connection::push(msg_t & msg)
+void Connection::push(msg_t &msg)
 {
 	out_buffer.push(msg);
 }
@@ -78,22 +80,27 @@ int Connection::write()
 	size_t nwritten = 0;
 	size_t data_len;
 
-	while (nextPkt()) {
-		msg_t& data = out_pkt;
+	while (nextPkt())
+	{
+		msg_t &data = out_pkt;
 		data_len = data.m_len;
 		nwritten = ::write(fd, data.m_data + send_len, data_len - send_len);
-		if (nwritten == -1) {
-			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+		if (nwritten == -1)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
 				return IO_AGAIN;
 			}
-			else {
+			else
+			{
 				//++send_fail_pkts;
 				return IO_ERROR;
 			}
 		}
 		send_len += nwritten;
 
-		if (send_len == data_len) {
+		if (send_len == data_len)
+		{
 			//printf("send fd(%d)  %d bytes\n", fd,  send_len);
 			//++total_send_pkt;
 			send_len = 0;
@@ -109,17 +116,21 @@ int Connection::read()
 	int recv_len = RECV_BUF_LEN - buf_len;
 	int nRcv = 0;
 	int res = 0;
-	while (recv_len) {
-		nRcv = ::read(fd, buf + buf_len, recv_len);//每次先取包头长度 
+	while (recv_len)
+	{
+		nRcv = ::read(fd, buf + buf_len, recv_len); //姣忔鍏堝彇鍖呭ご闀垮害
 		if (nRcv < 0)
 		{
-			if (errno == EINTR) {
+			if (errno == EINTR)
+			{
 				continue;
 			}
-			else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			else if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
 				return IO_AGAIN;
 			}
-			else {
+			else
+			{
 				return IO_ERROR;
 			}
 		}
@@ -127,7 +138,8 @@ int Connection::read()
 		{
 			return IO_CLOSED;
 		}
-		else {
+		else
+		{
 			buf_len += nRcv;
 			recv_len -= nRcv;
 		}
@@ -136,7 +148,7 @@ int Connection::read()
 	return IO_FINISH;
 }
 
-bool bufalloc(msg_t & msg, int len)
+bool bufalloc(msg_t &msg, int len)
 {
 	msg.m_data = NULL;
 	msg.m_len = 0;
@@ -150,7 +162,7 @@ bool bufalloc(msg_t & msg, int len)
 	return false;
 }
 
-void  buffree(msg_t& msg)
+void buffree(msg_t &msg)
 {
 	if (msg.m_data != NULL)
 	{

@@ -8,69 +8,74 @@
 #include <string.h>
 #include "IM.Loadbalance.pb.h"
 
-
 using namespace com::proto::loadbalance;
 using namespace com::proto::basic;
 
 /*
-* PDU½âÎö
+* PDUè§£æž
 */
 
-MsgService::MsgService(SdEventLoop* loop, ConnService*  conn):loop_(loop), tcpService_(this, loop) {
+MsgService::MsgService(SdEventLoop *loop, ConnService *conn) : loop_(loop), tcpService_(this, loop)
+{
 	m_connService = conn;
 	m_cur_dispatch = 0;
 	m_pNode = CNode::getInstance();
 }
 
-void MsgService::OnAccept(SdEventLoop * eventLoop, int fd, void * clientData, int mask)
+void MsgService::OnAccept(SdEventLoop *eventLoop, int fd, void *clientData, int mask)
 {
 }
 
-int MsgService::init( )
+int MsgService::init()
 {
-	// ¶ÁÈ¡routeÅäÖÃÐÅÏ¢£¬½øÐÐÁ¬½Ó
+	// è¯»å–routeé…ç½®ä¿¡æ¯ï¼Œè¿›è¡Œè¿žæŽ¥
 	m_ip = ConfigFileReader::getInstance()->ReadString(CONF_LISTEN_IP);
 	m_port = ConfigFileReader::getInstance()->ReadInt(CONF_LISTEN_PORT);
-	
-	if (m_ip == "" || m_port == 0) {
+
+	if (m_ip == "" || m_port == 0)
+	{
 		LOGE("not config inner ip or port");
 		return -1;
 	}
-	 NodeMgr::getInstance()->init(loop_,NULL,NULL);
-     m_pNode->init(&tcpService_);
+	NodeMgr::getInstance()->init(loop_, NULL, NULL);
+	m_pNode->init(&tcpService_);
 	NodeMgr::getInstance()->setConnectionStateCb(connectionStateEventCb, this);
 	return 0;
 }
 
-int MsgService::start() {
+int MsgService::start()
+{
 
 	LOGD("msgService  listen on %s:%d", m_ip.c_str(), m_port);
-	int res= tcpService_.listen(m_ip, m_port);
-	if (res == -1) {
+	int res = tcpService_.listen(m_ip, m_port);
+	if (res == -1)
+	{
 		LOGE("listen [ip:%s,port:%d]fail", m_ip.c_str(), m_port);
 	}
 	return res;
 }
 
-void MsgService::connectionStateEventCb(NodeConnectedState* state, void* arg)
+void MsgService::connectionStateEventCb(NodeConnectedState *state, void *arg)
 {
 	int sid = state->sid;
 	int sockfd = state->sockfd;
-	MsgService* server = reinterpret_cast<MsgService*>(arg);
-	if (server) {
+	MsgService *server = reinterpret_cast<MsgService *>(arg);
+	if (server)
+	{
 		/*if (sid == SID_DISPATCH) {
 			server->connectionStateEvent(sockfd, state, sid, nid);
 			return;
 		}*/
-		 if (sid == SID_LOADBALANCE) {
+		if (sid == SID_LOADBALANCE)
+		{
 			server->registLoadBalance(sockfd);
 		}
-		
 	}
 }
 
-void MsgService::registLoadBalance(int sockfd) {
-    LOGD("regist");
+void MsgService::registLoadBalance(int sockfd)
+{
+	LOGD("regist");
 	Regist_CommunicationService regist;
 	std::string ip = ConfigFileReader::getInstance()->ReadString(CONF_CONN_OUT_IP);
 	short port = ConfigFileReader::getInstance()->ReadInt(CONF_CONN_OUT_PORT);
@@ -83,20 +88,24 @@ void MsgService::registLoadBalance(int sockfd) {
 
 void MsgService::connectionStateEvent(int sockfd, int state, int sid, int nid)
 {
-	LOGD("sid:%s %s", sidName(sid), state == SOCK_CONNECTED ? "connect": "close");
-	if (state == SOCK_CONNECTED) {
-		SNode* node = new SNode;
+	LOGD("sid:%s %s", sidName(sid), state == SOCK_CONNECTED ? "connect" : "close");
+	if (state == SOCK_CONNECTED)
+	{
+		SNode *node = new SNode;
 		node->sid = sid;
 		node->nid = nid;
 		node->connected = true;
 		node->sockfd = sockfd;
 		m_nodes.push_back(node);
 	}
-	else {
+	else
+	{
 		auto it = m_nodes.begin();
-		while (it != m_nodes.end()) {
-			SNode* node = *it;
-			if (node->sid == sid && node->nid == nid) {
+		while (it != m_nodes.end())
+		{
+			SNode *node = *it;
+			if (node->sid == sid && node->nid == nid)
+			{
 				m_nodes.erase(it);
 				delete node;
 				return;
@@ -106,25 +115,27 @@ void MsgService::connectionStateEvent(int sockfd, int state, int sid, int nid)
 	}
 }
 
-int MsgService::recvClientMsg(int sockfd, PDUBase & base)
+int MsgService::recvClientMsg(int sockfd, PDUBase &base)
 {
 	SPDUBase pdu(base);
 	pdu.node_id = m_connService->getNodeId();
 	pdu.sockfd = sockfd;
-	std::string  user_id(base.terminal_token, sizeof(base.terminal_token));
+	std::string user_id(base.terminal_token, sizeof(base.terminal_token));
 	int fd = m_pNode->getUserNodeSock(SID_DISPATCH, user_id);
-	if (fd==-1) {
+	if (fd == -1)
+	{
 		LOGW("not find dispatch node");
 		return -1;
 	}
-	if (tcpService_.Send(fd, pdu) == -1) {
+	if (tcpService_.Send(fd, pdu) == -1)
+	{
 		LOGE("send msg to dispatch fail");
 		return -1;
 	}
 	return 0;
 }
 
-int MsgService::processInnerMsg(int sockfd, SPDUBase& base)
+int MsgService::processInnerMsg(int sockfd, SPDUBase &base)
 {
 	std::string user_id(base.terminal_token, sizeof(base.terminal_token));
 	LOGD("recv msg from dispatch server user_id:%s cmd(%d)", user_id.c_str(), base.command_id);
@@ -135,17 +146,20 @@ int MsgService::processInnerMsg(int sockfd, SPDUBase& base)
 int MsgService::randomGetSock()
 {
 	auto it = m_nodes.begin();
-	if (it != m_nodes.end()) {
-	return (*it)->sockfd;
+	if (it != m_nodes.end())
+	{
+		return (*it)->sockfd;
 	}
 	return -1;
 }
 
 //recv dispatch msg
-void MsgService::onData(int sockfd, PDUBase* base) {
-	SPDUBase* spdu = dynamic_cast<SPDUBase*>(base);
+void MsgService::onData(int sockfd, PDUBase *base)
+{
+	SPDUBase *spdu = dynamic_cast<SPDUBase *>(base);
 	int cmd = base->command_id;
-	switch (cmd) {
+	switch (cmd)
+	{
 	case CID_S2S_AUTHENTICATION_REQ:
 	case CID_S2S_PING:
 		m_pNode->handler(sockfd, *spdu);
@@ -159,10 +173,9 @@ void MsgService::onData(int sockfd, PDUBase* base) {
 
 void MsgService::onEvent(int fd, ConnectionEvent event)
 {
-	if (event == Disconnected) {
+	if (event == Disconnected)
+	{
 		m_pNode->setNodeDisconnect(fd);
 		tcpService_.closeSocket(fd);
 	}
 }
-
-

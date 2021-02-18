@@ -17,91 +17,91 @@
 #include <cnode.h>
 
 using namespace com::proto::login;
-#define VERSION_0                   0    //sdk         
-#define VERSION_1                   1    //bulik msg not ack
-#define MSG_ACK_TIME                  5
+#define VERSION_0 0 //sdk
+#define VERSION_1 1 //bulik msg not ack
+#define MSG_ACK_TIME 5
 
-#define  CHAT_MSG_THREAD_NUM         5
-#define  LOGIN_THREAD              3
-
+#define CHAT_MSG_THREAD_NUM 5
+#define LOGIN_THREAD 3
 
 class NodeConnectedState;
 
-typedef Lru<std::string, User*> User_Map_t;
+typedef Lru<std::string, User *> User_Map_t;
 typedef std::unordered_map<int, std::list<std::string>> Node_User_list;
-class LoginServer:public Instance {
+class LoginServer : public Instance
+{
 
 	//who connect me
 private:
-	class SNode {
+	class SNode
+	{
 	public:
 		int fd;
 		int sid;
 		int nid;
 	};
+
 public:
-	static LoginServer* getInstance();
+	static LoginServer *getInstance();
 	int init();
 	void start();
 
-	virtual void onData(int _sockfd, PDUBase* _base);
+	virtual void onData(int _sockfd, PDUBase *_base);
 	virtual void onEvent(int fd, ConnectionEvent event);
 
 private:
-	
 	LoginServer();
 	~LoginServer();
-	static void ProcessClientMsg(int _sockfd, SPDUBase*  _base);
-	int processInnerMsg(int sockfd, SPDUBase & base);
-	static int innerMsgCb(int sockfd, SPDUBase & base, void * arg);
-	
-	void ProcessHeartBeat(int _sockfd, SPDUBase& _pack);
-	int BuildUserCacheInfo(User * user, SPDUBase & _base, User_Login & _login);
+	static void ProcessClientMsg(int _sockfd, SPDUBase *_base);
+	int processInnerMsg(int sockfd, SPDUBase &base);
+	static int innerMsgCb(int sockfd, SPDUBase &base, void *arg);
 
-	void ProcessUserLogin(int _sockfd, SPDUBase&  _base);
-	void ProcessUserLogout(int sockfd, SPDUBase & _base, bool except);
-	void KickedNotify(User * user, int sockfd, std::string device_id, int device_type);
-	
-	static void Timer(int fd, short mask, void * privdata);
-	
+	void ProcessHeartBeat(int _sockfd, SPDUBase &_pack);
+	int BuildUserCacheInfo(User *user, SPDUBase &_base, User_Login &_login);
+
+	void ProcessUserLogin(int _sockfd, SPDUBase &_base);
+	void ProcessUserLogout(int sockfd, SPDUBase &_base, bool except);
+	void KickedNotify(User *user, int sockfd, std::string device_id, int device_type);
+
+	static void Timer(int fd, short mask, void *privdata);
+
 	void delConnection(int sockfd);
-	User * getUser(const std::string & user_id);
-	User * findUser(const std::string & user_id);
-	
-	static void configureStateCb(SPDUBase & base, void * arg);
-	int configureState(SPDUBase & base);
+	User *getUser(const std::string &user_id);
+	User *findUser(const std::string &user_id);
 
+	static void configureStateCb(SPDUBase &base, void *arg);
+	int configureState(SPDUBase &base);
 
-	static void connectionStateEvent(NodeConnectedState* state, void* arg);
+	static void connectionStateEvent(NodeConnectedState *state, void *arg);
 	void registCmd(int sid, int nid);
-	
-	int saveUserState(User* user);
-	int deleteUserState(const std::string & user_id);
+
+	int saveUserState(User *user);
+	int deleteUserState(const std::string &user_id);
 
 	void addConnection(int sockfd, int sid, int nid);
+
 private:
-	std::string                m_ip;
-	short                      m_port;
+	std::string m_ip;
+	short m_port;
 
-	RedisClient                redis_client;
-	User_Map_t                 m_user_map; //save user include offline 
-	std::recursive_mutex       m_user_map_mutex;
+	RedisClient redis_client;
+	User_Map_t m_user_map; //save user include offline
+	std::recursive_mutex m_user_map_mutex;
 
-	Node_User_list             m_node_user_list;
-	std::recursive_mutex       m_node_userid_mutex;
+	Node_User_list m_node_user_list;
+	std::recursive_mutex m_node_userid_mutex;
 
-	int                        m_logins; //login users num; 
-	
-	MsgProcess                 m_process[LOGIN_THREAD];
-	StateService               m_stateService;
-	SdEventLoop*               loop_;
-	TcpService                 tcpService_;
-	atomic_int                 m_onliners;
-	
+	int m_logins; //login users num;
 
-	std::list<SNode*>          m_nodes;
+	MsgProcess m_process[LOGIN_THREAD];
+	StateService m_stateService;
+	SdEventLoop *loop_;
+	TcpService tcpService_;
+	atomic_int m_onliners;
 
-	CNode*                      m_pNode;
+	std::list<SNode *> m_nodes;
+
+	CNode *m_pNode;
 	//process msg thread
 };
 
